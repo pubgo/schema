@@ -5,7 +5,7 @@ package schema
 var oracle = dialect{
 	queries: [3]string{
 		// columnTypes query.
-		`SELECT * FROM '%s' WHERE 1=0`,
+		"SELECT * FROM `%s` WHERE 1=0",
 		// tableNames query.
 		pack(`
 			SELECT table_name

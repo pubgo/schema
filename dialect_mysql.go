@@ -3,7 +3,7 @@ package schema
 var mysql = dialect{
 	queries: [3]string{
 		// columnTypes query.
-		`SELECT * FROM '%s' LIMIT 0`,
+		"SELECT * FROM `%s` LIMIT 0",
 		// tableNames query.
 		pack(`
 			SELECT table_name

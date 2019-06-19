@@ -3,7 +3,7 @@ package schema
 var sqlite = dialect{
 	queries: [3]string{
 		// columnTypes query.
-		`SELECT * FROM '%s' LIMIT 0`,
+		"SELECT * FROM `%s` LIMIT 0",
 		// tableNames query.
 		pack(`
 			SELECT name
