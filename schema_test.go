@@ -3,6 +3,7 @@ package schema_test
 import (
 	"database/sql"
 	"database/sql/driver"
+	"github.com/pubgo/errors"
 	"log"
 	"strings"
 
@@ -28,6 +29,7 @@ type testParams struct {
 }
 
 func SchemaTestRunner(params *testParams) {
+	defer errors.Debug()
 
 	setup := func() (*sql.DB, func()) {
 		db, err := sql.Open(params.DriverName, params.ConnStr)
@@ -64,11 +66,12 @@ func SchemaTestRunner(params *testParams) {
 	}
 
 	Describe("Table", func() {
+		defer errors.Debug()
+
 		It("should return the column type info for an existing table", func() {
 			db, done := setup()
 			defer done()
-			ci, err := schema.Table(db, "web_resource")
-			Expect(err).To(BeNil())
+			ci:= schema.Table(db, "web_resource")
 			Expect(ci).To(HaveLen(10))
 			var list []string
 			for _, c := range ci {
@@ -79,12 +82,13 @@ func SchemaTestRunner(params *testParams) {
 		It("should return an error for a non-existing table", func() {
 			db, done := setup()
 			defer done()
-			_, err := schema.Table(db, "XXX-NO-SUCH-TABLE-XXX")
-			Expect(err).ToNot(BeNil())
+			schema.Table(db, "XXX-NO-SUCH-TABLE-XXX")
 		})
 	})
 
 	Describe("TableNames", func() {
+		defer errors.Debug()
+
 		It("should return the table names", func() {
 			db, done := setup()
 			defer done()
@@ -92,19 +96,19 @@ func SchemaTestRunner(params *testParams) {
 			// err := oraDump(db)
 			// Expect(err).To(BeNil())
 
-			sn, err := schema.TableNames(db)
-			Expect(err).To(BeNil())
+			sn := schema.TableNames(db)
 			Expect(sn).To(HaveLen(1))
 			Expect(sn).To(Equal([]string{params.TableNameExpRes}))
 		})
 	})
 
 	Describe("Tables", func() {
+		defer errors.Debug()
+
 		It("should return the column type info for all tables", func() {
 			db, done := setup()
 			defer done()
-			sc, err := schema.Tables(db)
-			Expect(err).To(BeNil())
+			sc:= schema.Tables(db)
 			Expect(sc).To(HaveLen(1))
 			ci, ok := sc[params.TableNameExpRes]
 			Expect(ok).To(BeTrue())
@@ -113,11 +117,12 @@ func SchemaTestRunner(params *testParams) {
 	})
 
 	Describe("View", func() {
+		defer errors.Debug()
+
 		It("should return the column type info for the view", func() {
 			db, done := setup()
 			defer done()
-			ci, err := schema.View(db, "web_resource_view")
-			Expect(err).To(BeNil())
+			ci:= schema.View(db, "web_resource_view")
 			Expect(ci).To(HaveLen(2))
 			var list []string
 			for _, c := range ci {
@@ -128,22 +133,24 @@ func SchemaTestRunner(params *testParams) {
 	})
 
 	Describe("ViewNames", func() {
+		defer errors.Debug()
+
 		It("should return the view names", func() {
 			db, done := setup()
 			defer done()
-			sn, err := schema.ViewNames(db)
-			Expect(err).To(BeNil())
+			sn:= schema.ViewNames(db)
 			Expect(sn).To(HaveLen(1))
 			Expect(sn).To(Equal([]string{params.ViewNameExpRes}))
 		})
 	})
 
 	Describe("Views", func() {
+		defer errors.Debug()
+
 		It("should return the column type info for all views", func() {
 			db, done := setup()
 			defer done()
-			sc, err := schema.Views(db)
-			Expect(err).To(BeNil())
+			sc:= schema.Views(db)
 			Expect(sc).To(HaveLen(1))
 			ci, ok := sc[params.ViewNameExpRes]
 			Expect(ok).To(BeTrue())
@@ -155,33 +162,29 @@ func SchemaTestRunner(params *testParams) {
 
 var _ = Describe("schema", func() {
 	Context("using a fake db driver", func() {
+		defer errors.Debug()
+
 		sql.Register("fakedb", fakeDb{})
 		db, _ := sql.Open("fakedb", "")
 
 		It("should return nils for every method", func() {
-			ci, err := schema.Table(db, "web_resource")
+			ci:= schema.Table(db, "web_resource")
 			Expect(ci).To(BeNil())
-			Expect(err).To(BeNil())
 
-			tn, err := schema.TableNames(db)
+			tn := schema.TableNames(db)
 			Expect(tn).To(BeNil())
-			Expect(err).To(BeNil())
 
-			ta, err := schema.Tables(db)
+			ta:= schema.Tables(db)
 			Expect(ta).To(BeNil())
-			Expect(err).To(BeNil())
 
-			ci, err = schema.View(db, "web_resource")
+			ci = schema.View(db, "web_resource")
 			Expect(ci).To(BeNil())
-			Expect(err).To(BeNil())
 
-			vn, err := schema.ViewNames(db)
+			vn := schema.ViewNames(db)
 			Expect(vn).To(BeNil())
-			Expect(err).To(BeNil())
 
-			vw, err := schema.Views(db)
+			vw:= schema.Views(db)
 			Expect(vw).To(BeNil())
-			Expect(err).To(BeNil())
 		})
 	})
 })

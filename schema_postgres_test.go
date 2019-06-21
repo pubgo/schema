@@ -2,6 +2,7 @@ package schema_test
 
 import (
 	"fmt"
+	"github.com/pubgo/errors"
 
 	_ "github.com/lib/pq" // postgres
 	// _ "github.com/jackc/pgx/stdlib" // pgx
@@ -15,6 +16,7 @@ import (
 
 var _ = Describe("schema", func() {
 	Context("using github.com/lib/pq (Postgres)", func() {
+		defer errors.Debug()
 
 		const (
 			user = "postgres"

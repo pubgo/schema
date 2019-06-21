@@ -2,6 +2,7 @@ package schema_test
 
 import (
 	"fmt"
+	"github.com/pubgo/errors"
 
 	_ "github.com/denisenkom/go-mssqldb" // mssql
 	// _ "github.com/minus5/gofreetds" // mssql
@@ -20,6 +21,7 @@ import (
 
 var _ = XDescribe("schema", func() {
 	Context("using github.com/denisenkom/go-mssqldb (Microsoft SQL-Server)", func() {
+		defer errors.Debug()
 
 		const (
 			user = "test_user"

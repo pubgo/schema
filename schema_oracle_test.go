@@ -2,6 +2,7 @@ package schema_test
 
 import (
 	"fmt"
+	"github.com/pubgo/errors"
 
 	// _ "gopkg.in/goracle.v2" // goracle
 	// _ "github.com/mattn/go-oci8" // oci8
@@ -13,6 +14,7 @@ import (
 
 var _ = XDescribe("schema", func() {
 	Context("using github.com/go-goracle/goracle (Oracle)", func() {
+		defer errors.Debug()
 
 		const (
 			user = "test_user"

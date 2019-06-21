@@ -2,6 +2,7 @@ package schema_test
 
 import (
 	"fmt"
+	"github.com/pubgo/errors"
 
 	_ "github.com/go-sql-driver/mysql" // mysql
 	// _ "github.com/ziutek/mymysql/godrv" // mymysql
@@ -18,6 +19,7 @@ import (
 
 var _ = Describe("schema", func() {
 	Context("using github.com/go-sql-driver/mysql (MySQL)", func() {
+		defer errors.Debug()
 
 		const (
 			user = "test_user"

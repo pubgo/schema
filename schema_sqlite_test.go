@@ -1,6 +1,7 @@
 package schema_test
 
 import (
+	"github.com/pubgo/errors"
 	"log"
 	"os"
 
@@ -14,6 +15,7 @@ import (
 
 var _ = Describe("schema", func() {
 	Context("using github.com/mattn/go-sqlite3 (SQLite)", func() {
+		defer errors.Debug()
 
 		const (
 			// user = ""
