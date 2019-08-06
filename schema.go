@@ -90,16 +90,12 @@ import (
 // TableNames returns a list of all table names in the current schema
 // (not including system tables).
 func TableNames(db *sql.DB) []string {
-	defer errors.Handle()
-
 	return names(db, tableNames)
 }
 
 // ViewNames returns a list of all view names in the current schema
 // (not including system views).
 func ViewNames(db *sql.DB) []string {
-	defer errors.Handle()
-
 	return names(db, viewNames)
 }
 
@@ -109,8 +105,6 @@ func ViewNames(db *sql.DB) []string {
 // It uses the database driver name and the passed query type
 // to lookup the appropriate dialect and query.
 func names(db *sql.DB, qt query) []string {
-	defer errors.Handle()
-
 	dt := fmt.Sprintf("%T", db.Driver())
 	d, ok := driverDialect[dt]
 	if !ok {
@@ -137,15 +131,11 @@ func names(db *sql.DB, qt query) []string {
 
 // Table returns the column type metadata for the given table name.
 func Table(db *sql.DB, name string) []*sql.ColumnType {
-	defer errors.Handle()
-
 	return object(db, name)
 }
 
 // View returns the column type metadata for the given view name.
 func View(db *sql.DB, name string) []*sql.ColumnType {
-	defer errors.Handle()
-
 	return object(db, name)
 }
 
@@ -155,8 +145,6 @@ func View(db *sql.DB, name string) []*sql.ColumnType {
 // It uses the database driver name to look up the appropriate
 // dialect, and the passed table/view name to build the query.
 func object(db *sql.DB, name string) []*sql.ColumnType {
-	defer errors.Handle()
-
 	dt := fmt.Sprintf("%T", db.Driver())
 
 	d, ok := driverDialect[dt]
@@ -168,8 +156,8 @@ func object(db *sql.DB, name string) []*sql.ColumnType {
 	q := fmt.Sprintf(d.queries[columnTypes], name)
 	rows, err := db.Query(q)
 	errors.Wrap(err, "db query error")
-
-	defer errors.Panic(rows.Close())
+	defer errors.Panic(rows.Close)
+	
 	rs, err := rows.ColumnTypes()
 	errors.Wrap(err, "rows columnTypes error")
 	return rs
@@ -178,16 +166,12 @@ func object(db *sql.DB, name string) []*sql.ColumnType {
 // Tables returns column type metadata for all tables in the current schema
 // (not including system tables). The returned map is keyed by table name.
 func Tables(db *sql.DB) map[string][]*sql.ColumnType {
-	defer errors.Handle()
-
 	return objects(db, TableNames)
 }
 
 // Views returns column type metadata for all views in the current schema
 // (not including system views). The returned map is keyed by view name.
 func Views(db *sql.DB) map[string][]*sql.ColumnType {
-	defer errors.Handle()
-
 	return objects(db, ViewNames)
 }
 
@@ -200,8 +184,6 @@ type listFn func(*sql.DB) []string
 // It uses the passed list provider function to obtain table/view names,
 // and calls object() to fetch the column metadata for each name in the list.
 func objects(db *sql.DB, nameFn listFn) map[string][]*sql.ColumnType {
-	defer errors.Handle()
-
 	names := nameFn(db)
 	if len(names) == 0 {
 		return nil
