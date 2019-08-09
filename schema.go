@@ -50,7 +50,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/pubgo/errors"
-	"log"
 )
 
 // https://github.com/golang/go/issues/7408
@@ -89,13 +88,13 @@ import (
 
 // TableNames returns a list of all table names in the current schema
 // (not including system tables).
-func TableNames(db *sql.DB) []string {
+func TableNames(db *sql.DB) ([]string, error) {
 	return names(db, tableNames)
 }
 
 // ViewNames returns a list of all view names in the current schema
 // (not including system views).
-func ViewNames(db *sql.DB) []string {
+func ViewNames(db *sql.DB) ([]string, error) {
 	return names(db, viewNames)
 }
 
@@ -104,13 +103,13 @@ func ViewNames(db *sql.DB) []string {
 //
 // It uses the database driver name and the passed query type
 // to lookup the appropriate dialect and query.
-func names(db *sql.DB, qt query) []string {
+func names(db *sql.DB, qt query) (res []string, err error) {
+	defer errors.RespErr(&err)
+
 	dt := fmt.Sprintf("%T", db.Driver())
 	d, ok := driverDialect[dt]
-	if !ok {
-		log.Printf("unknown db driver %s\n", dt)
-		return nil
-	}
+	errors.T(!ok, "unknown db driver %s\n", dt)
+
 	// Run the appropriate query from dialect:
 	// this runs a query to fetch names of tables/views
 	// from tables that contain db metadata.
@@ -118,7 +117,8 @@ func names(db *sql.DB, qt query) []string {
 	q := d.queries[qt]
 	rows, err := db.Query(q)
 	errors.Wrap(err, "db query error")
-	defer errors.Panic(rows.Close())
+	defer errors.Panic(rows.Close)
+
 	// Scan result into list of names.
 	var names []string
 	n := ""
@@ -126,16 +126,17 @@ func names(db *sql.DB, qt query) []string {
 		errors.Wrap(rows.Scan(&n), "rows scan error")
 		names = append(names, n)
 	}
-	return names
+	res = names
+	return
 }
 
 // Table returns the column type metadata for the given table name.
-func Table(db *sql.DB, name string) []*sql.ColumnType {
+func Table(db *sql.DB, name string) ([]*sql.ColumnType, error) {
 	return object(db, name)
 }
 
 // View returns the column type metadata for the given view name.
-func View(db *sql.DB, name string) []*sql.ColumnType {
+func View(db *sql.DB, name string) ([]*sql.ColumnType, error) {
 	return object(db, name)
 }
 
@@ -144,9 +145,10 @@ func View(db *sql.DB, name string) []*sql.ColumnType {
 //
 // It uses the database driver name to look up the appropriate
 // dialect, and the passed table/view name to build the query.
-func object(db *sql.DB, name string) []*sql.ColumnType {
-	dt := fmt.Sprintf("%T", db.Driver())
+func object(db *sql.DB, name string) (res []*sql.ColumnType, err error) {
+	defer errors.RespErr(&err)
 
+	dt := fmt.Sprintf("%T", db.Driver())
 	d, ok := driverDialect[dt]
 	errors.T(!ok, "unknown db driver %s\n", dt)
 
@@ -157,41 +159,42 @@ func object(db *sql.DB, name string) []*sql.ColumnType {
 	rows, err := db.Query(q)
 	errors.Wrap(err, "db query error")
 	defer errors.Panic(rows.Close)
-	
-	rs, err := rows.ColumnTypes()
+
+	res, err = rows.ColumnTypes()
 	errors.Wrap(err, "rows columnTypes error")
-	return rs
+	return
 }
 
 // Tables returns column type metadata for all tables in the current schema
 // (not including system tables). The returned map is keyed by table name.
-func Tables(db *sql.DB) map[string][]*sql.ColumnType {
+func Tables(db *sql.DB) (map[string][]*sql.ColumnType, error) {
 	return objects(db, TableNames)
 }
 
 // Views returns column type metadata for all views in the current schema
 // (not including system views). The returned map is keyed by view name.
-func Views(db *sql.DB) map[string][]*sql.ColumnType {
+func Views(db *sql.DB) (map[string][]*sql.ColumnType, error) {
 	return objects(db, ViewNames)
 }
 
 // listFn provides a list of names from the database.
-type listFn func(*sql.DB) []string
+type listFn func(*sql.DB) ([]string, error)
 
 // objects queries the database and returns metadata about the
 // column types for all tables or all views.
 //
 // It uses the passed list provider function to obtain table/view names,
 // and calls object() to fetch the column metadata for each name in the list.
-func objects(db *sql.DB, nameFn listFn) map[string][]*sql.ColumnType {
-	names := nameFn(db)
-	if len(names) == 0 {
-		return nil
-	}
+func objects(db *sql.DB, nameFn listFn) (res map[string][]*sql.ColumnType, err error) {
+	defer errors.RespErr(&err)
 
-	m := make(map[string][]*sql.ColumnType, len(names))
+	names, err := nameFn(db)
+	errors.Panic(err)
+
+	res = make(map[string][]*sql.ColumnType, len(names))
 	for _, n := range names {
-		m[n] = object(db, n)
+		res[n], err = object(db, n)
+		errors.Panic(err)
 	}
-	return m
+	return
 }
