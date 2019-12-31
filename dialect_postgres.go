@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -32,8 +33,29 @@ var postgres1 = dialect{
 	},
 }
 
+var _ Dialect = (*postgres)(nil)
+
 type postgres struct {
-	commonDialect
+}
+
+func (s postgres) TableNames(db *sql.DB) ([]string, error) {
+	panic("implement me")
+}
+
+func (s postgres) ViewNames(db *sql.DB) ([]string, error) {
+	panic("implement me")
+}
+
+func (s postgres) TableColumns(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
+	panic("implement me")
+}
+
+func (s postgres) ViewColumns(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
+	panic("implement me")
+}
+
+func (s postgres) TableIndexs(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
+	panic("implement me")
 }
 
 func (postgres) GetName() string {

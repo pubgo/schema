@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"database/sql"
 	"strings"
 )
 
@@ -49,32 +50,15 @@ func pack(s string) string {
 	return strings.Join(strings.Fields(s), " ")
 }
 
-// Dialect interface contains behaviors that differ across SQL database
+// Dialect
+// interface contains behaviors that differ across SQL database
 type Dialect interface {
-	// GetName get dialect's name
 	GetName() string
 
-	// SetDB set db for dialect
-	//SetDB(db SQLCommon)
+	TableNames(db *sql.DB) ([]string, error)
+	ViewNames(db *sql.DB) ([]string, error)
 
-	// BindVar return the placeholder for actual values in SQL statements, in many dbs it is "?", Postgres using $1
-	BindVar(i int) string
-	// Quote quotes field name to avoid SQL parsing exceptions by using a reserved word as a field name
-	Quote(key string) string
-	// DataTypeOf return data's sql type
-	//DataTypeOf(field *StructField) string
-
-	// HasIndex check has index or not
-	HasIndex(tableName string, indexName string) bool
-	// HasForeignKey check has foreign key or not
-	HasForeignKey(tableName string, foreignKeyName string) bool
-	// HasTable check has table or not
-	HasTable(tableName string) bool
-	// HasColumn check has column or not
-	HasColumn(tableName string, columnName string) bool
-
-	// SelectFromDummyTable return select values, for most dbs, `SELECT values` just works, mysql needs `SELECT value FROM DUAL`
-	SelectFromDummyTable() string
-	// DefaultValueStr
-	DefaultValueStr() string
+	TableColumns(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error)
+	ViewColumns(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error)
+	TableIndexs(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error)
 }

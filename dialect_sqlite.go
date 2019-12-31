@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"database/sql"
 	"fmt"
 )
 
@@ -27,7 +28,29 @@ var sqlite = dialect{
 	},
 }
 
+var _ Dialect = (*sqlite3)(nil)
+
 type sqlite3 struct {
+}
+
+func (s sqlite3) TableNames(db *sql.DB) ([]string, error) {
+	panic("implement me")
+}
+
+func (s sqlite3) ViewNames(db *sql.DB) ([]string, error) {
+	panic("implement me")
+}
+
+func (s sqlite3) TableColumns(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
+	panic("implement me")
+}
+
+func (s sqlite3) ViewColumns(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
+	panic("implement me")
+}
+
+func (s sqlite3) TableIndexs(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
+	panic("implement me")
 }
 
 func (sqlite3) GetName() string {
