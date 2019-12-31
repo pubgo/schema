@@ -5,90 +5,34 @@ import (
 	"fmt"
 )
 
-var sqlite = dialect{
-	queries: [3]string{
-		// columnTypes query.
-		"SELECT * FROM `%s` LIMIT 0",
-		// tableNames query.
-		pack(`
-			SELECT name
-			FROM
-				sqlite_master
-			WHERE
-				type = 'table'
-		`),
-		// viewNames query.
-		pack(`
-			SELECT name
-			FROM
-				sqlite_master
-			WHERE
-				type = 'view'
-		`),
-	},
-}
-
 var _ Dialect = (*sqlite3)(nil)
 
 type sqlite3 struct {
+	db *sql.DB
 }
 
-func (s sqlite3) TableNames(db *sql.DB) ([]string, error) {
-	panic("implement me")
+func (s *sqlite3) setDb(db *sql.DB) {
+	s.db = db
 }
 
-func (s sqlite3) ViewNames(db *sql.DB) ([]string, error) {
-	panic("implement me")
+func (s *sqlite3) TableNames() string {
+	return `SELECT name FROM sqlite_master WHERE type = 'table'`
 }
 
-func (s sqlite3) TableColumns(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
-	panic("implement me")
+func (s *sqlite3) ViewNames() string {
+	return `SELECT name FROM sqlite_master WHERE type = 'view'`
 }
 
-func (s sqlite3) ViewColumns(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
-	panic("implement me")
+func (s *sqlite3) TableColumns(name string) string {
+	return fmt.Sprintf("SELECT * FROM `%s` LIMIT 0", name)
+	//return "SELECT * FROM sqlite_master WHERE tbl_name = ? and type = 'table'"
 }
 
-func (s sqlite3) TableIndexs(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
-	panic("implement me")
+func (s *sqlite3) ViewColumns(name string) string {
+	return fmt.Sprintf("SELECT * FROM `%s` LIMIT 0", name)
+	//return "SELECT * FROM sqlite_master WHERE tbl_name = ? and type = 'view'"
 }
 
-func (sqlite3) GetName() string {
-	return "sqlite3"
-}
-
-func (s sqlite3) HasIndex(tableName string, indexName string) bool {
-	var count int
-	s.db.QueryRow(fmt.Sprintf("SELECT count(*) FROM sqlite_master WHERE tbl_name = ? AND sql LIKE '%%INDEX %v ON%%'", indexName), tableName).Scan(&count)
-	return count > 0
-}
-
-func (s sqlite3) HasTable(tableName string) bool {
-	var count int
-	s.db.QueryRow("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?", tableName).Scan(&count)
-	return count > 0
-}
-
-func (s sqlite3) HasColumn(tableName string, columnName string) bool {
-	var count int
-	s.db.QueryRow(fmt.Sprintf("SELECT count(*) FROM sqlite_master WHERE tbl_name = ? AND (sql LIKE '%%\"%v\" %%' OR sql LIKE '%%%v %%');\n", columnName, columnName), tableName).Scan(&count)
-	return count > 0
-}
-
-func (s sqlite3) CurrentDatabase() (name string) {
-	var (
-		ifaces   = make([]interface{}, 3)
-		pointers = make([]*string, 3)
-		i        int
-	)
-	for i = 0; i < 3; i++ {
-		ifaces[i] = &pointers[i]
-	}
-	if err := s.db.QueryRow("PRAGMA database_list").Scan(ifaces...); err != nil {
-		return
-	}
-	if pointers[1] != nil {
-		name = *pointers[1]
-	}
-	return
+func (s *sqlite3) TableIndexs(name string) string {
+	return fmt.Sprintf("SELECT name FROM sqlite_master WHERE tbl_name = `%s` and type = 'index'", name)
 }
