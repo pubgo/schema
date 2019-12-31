@@ -1,13 +1,5 @@
 package schema
 
-import (
-	"database/sql"
-	"github.com/pubgo/g/xerror"
-	"regexp"
-)
-
-var keyNameRegex = regexp.MustCompile("[^a-zA-Z0-9]+")
-
 // driverDialect,
 // mapping database/sql driver names to database dialects.
 // This is somewhat fragile.
@@ -20,13 +12,4 @@ var driverDialect = map[string]Dialect{
 	"*pgsqldriver.postgresDriver": &postgres{}, // github.com/jbarham/gopgsqldriver - TODO(js) No datatypes.
 	"*mysql.MySQLDriver":          &mysql{},    // github.com/go-sql-driver/mysql
 	"*godrv.Driver":               &mysql{},    // github.com/ziutek/mymysql - TODO(js) No datatypes.
-}
-
-func _names(rows *sql.Rows) (names []string) {
-	n := ""
-	for rows.Next() {
-		xerror.PanicM(rows.Scan(&n), "rows scan error")
-		names = append(names, n)
-	}
-	return
 }

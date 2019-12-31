@@ -3,62 +3,57 @@ package schema
 import (
 	"database/sql"
 	"fmt"
+	"github.com/pubgo/g/xerror"
 )
 
-// TableNames
-// returns a list of all table names in the current schema
-// (not including system tables).
-func TableNames(db *sql.DB) ([]string, error) {
-	dt := fmt.Sprintf("%T", db.Driver())
-	d, ok := driverDialect[dt]
-	if !ok {
-		return nil, fmt.Errorf("unknown db driver %s\n", dt)
+func _names(rows *sql.Rows) (names []string) {
+	n := ""
+	for rows.Next() {
+		xerror.PanicM(rows.Scan(&n), "rows scan error")
+		names = append(names, n)
 	}
-
-	d.setDb(db)
-	return d.TableNames()
+	return
 }
 
-// ViewNames returns a list of all view names in the current schema
-// (not including system views).
-func ViewNames(db *sql.DB) ([]string, error) {
+func _dialect(db *sql.DB) Dialect {
 	dt := fmt.Sprintf("%T", db.Driver())
 	d, ok := driverDialect[dt]
-	if !ok {
-		return nil, fmt.Errorf("unknown db driver %s\n", dt)
-	}
-
-	d.setDb(db)
-	return d.ViewNames()
+	xerror.PanicT(!ok, "unknown db driver %s\n", dt)
+	return d
 }
 
-func TableColumns(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
-	dt := fmt.Sprintf("%T", db.Driver())
-	d, ok := driverDialect[dt]
-	if !ok {
-		return nil, fmt.Errorf("unknown db driver %s\n", dt)
-	}
+func TableNames(db *sql.DB) (_ []string, err error) {
+	defer xerror.RespErr(&err)
 
-	d.setDb(db)
-	return d.TableColumns(name...)
+	d := _dialect(db)
+	return _names(xerror.PanicErr(db.Query(d.TableNames())).(*sql.Rows)), nil
 }
-func ViewColumns(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
-	dt := fmt.Sprintf("%T", db.Driver())
-	d, ok := driverDialect[dt]
-	if !ok {
-		return nil, fmt.Errorf("unknown db driver %s\n", dt)
-	}
 
-	d.setDb(db)
-	return d.ViewColumns(name...)
+func ViewNames(db *sql.DB) (_ []string, err error) {
+	defer xerror.RespErr(&err)
+
+	d := _dialect(db)
+	return _names(xerror.PanicErr(db.Query(d.TableNames())).(*sql.Rows)), nil
 }
-func TableIndexs(db *sql.DB, name ...string) (map[string][]*sql.ColumnType, error) {
-	dt := fmt.Sprintf("%T", db.Driver())
-	d, ok := driverDialect[dt]
-	if !ok {
-		return nil, fmt.Errorf("unknown db driver %s\n", dt)
-	}
 
-	d.setDb(db)
-	return d.TableIndexs(name...)
+func TableColumns(db *sql.DB, name string) (_ []*sql.ColumnType, err error) {
+	defer xerror.RespErr(&err)
+
+	d := _dialect(db)
+	rows := xerror.PanicErr(db.Query(d.TableColumns(name))).(*sql.Rows)
+	return rows.ColumnTypes()
+}
+func ViewColumns(db *sql.DB, name string) (_ []*sql.ColumnType, err error) {
+	defer xerror.RespErr(&err)
+
+	d := _dialect(db)
+	rows := xerror.PanicErr(db.Query(d.ViewColumns(name))).(*sql.Rows)
+	return rows.ColumnTypes()
+}
+func TableIndexs(db *sql.DB, name string) (_ []*sql.ColumnType, err error) {
+	defer xerror.RespErr(&err)
+
+	d := _dialect(db)
+	rows := xerror.PanicErr(db.Query(d.TableIndexs(name))).(*sql.Rows)
+	return rows.ColumnTypes()
 }
