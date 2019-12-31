@@ -209,6 +209,13 @@ func (s mysql) BuildKeyName(kind, tableName string, fields ...string) string {
 	return fmt.Sprintf("%s%x", string(destRunes), bs)
 }
 
+func (s commonDialect) HasIndex(tableName string, indexName string) bool {
+	var count int
+	currentDatabase, tableName := currentDatabaseAndTable(&s, tableName)
+	s.db.QueryRow("SELECT count(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE table_schema = ? AND table_name = ? AND index_name = ?", currentDatabase, tableName, indexName).Scan(&count)
+	return count > 0
+}
+
 // NormalizeIndexAndColumn returns index name and column name for specify an index prefix length if needed
 func (mysql) NormalizeIndexAndColumn(indexName, columnName string) (string, string) {
 	submatch := mysqlIndexRegex.FindStringSubmatch(indexName)
